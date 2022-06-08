@@ -23,18 +23,12 @@ def metryka_euklidesowa_wektory(obj_1, obj_2):
     return math.sqrt(wynik)
 
 
-def random_klasa_decyzyjna(tab):
-    # nadanie randomowej klasy decyzyjnej
+def rand_decyzyjna(tab): # loswanie klasy decyzyjnej
     for i in range(len(tab)):
         tab[i][len(tab[0]) - 1] = random.randint(0, 1)
 
 
-def grupowanie_po_klasach_dezyjnych(tab):
-    """
-    Funkcja tworzy słownik pogrupowanych wierszy po klasie decyzyjnej.
-    :param tab:
-    :return: {klasa_decyzyjna: [wiersze]}
-    """
+def grupowanie_decyzyjne(tab):
     slownik = defaultdict(list)
     for i in range(len(tab)):
         klasa_decyzyjna = (tab[i][len(tab[0]) - 1])
@@ -42,31 +36,22 @@ def grupowanie_po_klasach_dezyjnych(tab):
     return slownik
 
 
-def suma_metryk(target, tab):
-    """
-    Funkcja liczy sumę odległości dla pojedyńczego wiersza
-    :param target: wiersz, od którego liczone są odległości
-    :param tab: tablica
-    :return: suma odległości
-    """
+def sum_metr(target, tab):
+
     suma = 0
     for i in range(len(tab)):
         suma += metryka_euklidesowa_wektory(target, tab[i])
     return suma
 
 
-def minimalna_metryka(slownik):
-    """
-    Funkcja tworzy słownik z minimami sum metryk euklidesowych
-    :param slownik: słownik grup
-    :return: {klasa_decyzyjna: (wiersz, index_wiersza)}
-    """
+def min_metr(slownik):
+
     slownik_minima = {}
     for key in slownik:
         wiersz = slownik[key][0]
-        suma_minimum = suma_metryk(slownik[key][0], slownik[key])
+        suma_minimum = sum_metr(slownik[key][0], slownik[key])
         for i in range(len(slownik[key])):
-            suma = suma_metryk(slownik[key][i], slownik[key])
+            suma = sum_metr(slownik[key][i], slownik[key])
             if suma < suma_minimum:
                 suma_minimum = suma
                 wiersz = slownik[key][i]
@@ -75,12 +60,7 @@ def minimalna_metryka(slownik):
 
 
 def kolorowanie(slownik_minim, slownik_pogrupowany):
-    """
-    Funkcja, która zmienia klasy decyzyjne.
 
-    Sprawdza, do której minimalnej sumy metryki euklidesa ma bliżej dany wiersz z danej grupy.
-    Jeżeli wiersz ma 'bliżej' do innej klasy decyzyjnej, to zmienia klasę decyzyjną
-    """
     licznik_zmian = 0
     zmiana = False
     nowy_slownik_pogrupowany = defaultdict(list)
@@ -108,16 +88,16 @@ def kolorowanie(slownik_minim, slownik_pogrupowany):
     return nowy_slownik_pogrupowany, zmiana, licznik_zmian
 
 
-def hephaestus(plik):
+def grupowanie(plik):
     dane = load_file(plik)
-    random_klasa_decyzyjna(dane)
-    dane_pogrupowane = grupowanie_po_klasach_dezyjnych(dane)
+    rand_decyzyjna(dane)
+    dane_pogrupowane = grupowanie_decyzyjne(dane)
 
-    slownik_minim_tmp = minimalna_metryka(dane_pogrupowane)
+    slownik_minim_tmp = min_metr(dane_pogrupowane)
     dane_pokolorowane_pogrupowane, zmiana, licznik = kolorowanie(slownik_minim_tmp, dane_pogrupowane)
 
     for i in range(200):
-        slownik_minim = minimalna_metryka(dane_pokolorowane_pogrupowane)
+        slownik_minim = min_metr(dane_pokolorowane_pogrupowane)
         dane_pokolorowane_pogrupowane, zmiana, licznik = kolorowanie(slownik_minim, dane_pokolorowane_pogrupowane)
         print(f'Pętla: {i}')
         print(f'Minimalne wiersze: {slownik_minim}')
@@ -128,8 +108,8 @@ def hephaestus(plik):
     return dane_pokolorowane_pogrupowane
 
 
-def zgodnosc(oryginal, hep):
-    o = grupowanie_po_klasach_dezyjnych(oryginal)
+def check(oryginal, hep):
+    o = grupowanie_decyzyjne(oryginal)
     zgodnosc = 0
     for key in o:
         for wiersz in hep[key]:
@@ -139,12 +119,12 @@ def zgodnosc(oryginal, hep):
 
 
 #  ======================
-slownik = hephaestus('australian.dat')
-print('============== Wynik Hephaestus ==============')
+slownik = grupowanie('australian.dat')
+print('\n')
 for k in slownik:
-    print(f'Klasa decyzyjna: {k}: {slownik[k]}')
-oryginal = load_file('australian.dat')
-print(f'Zgodność z oryginałem: {zgodnosc(oryginal, slownik)}%')
+    print(f'klasa: {k}: {slownik[k]}')
+austr = load_file('australian.dat')
+print(f'check: {check(austr, slownik)}%')
 
 from scipy.integrate import quad
 import matplotlib.pyplot as plt
